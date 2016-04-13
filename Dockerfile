@@ -1,1 +1,4 @@
-FROM gcr.io/skygear-cloud/skygear-server:onbuild
+FROM quay.io/skygeario/skygear-app-base:canary
+
+CMD ["py-skygear"]
+

@@ -1,166 +1,59 @@
-# Example configuration for plugin
+# Example cloudcode for Skygear Cloud
 
-## Requirements
+This is an example project for building cloudcode for Skygear Cloud. It
+uses [The Cat API](http://thecatapi.com) to demonstrate how to cloudcode
+can be written to integrate with third-party libraries and services.
 
-Latest version of Docker Toolbox.
+## Pushing cloudcode to Skygear Cloud for the first time
 
-I repeat: **Latest version** of Docker Toolbox.
+This example requires a Skygear Cloud account.
 
-## tl;dr
+Once registered, add your SSH public key to the portal so that you have
+permission to push your cloudcode to Skygear Cloud.
 
-```shell
-$ docker-machine create --driver virtualbox default
-$ eval `docker-machine env default`
-$ docker-compose pull
-$ docker-compose build --pull --no-cache plugin
-$ docker-compose start db redis
-$ sleep 10
-$ docker-compose up -d app plugin
-$ curl -H "Content-Type: application/json" -X POST \
-    -d '{"action":"catapi:get"}' http://`docker-machine ip default`:3000
-{"result":{"message":"OK","url":"http://24.media.tumblr.com/tumblr_li3gm7l8nz1qhd9p6o1_1280.jpg"}}
-```
-
-## I want to create a Docker Machine
+You have to set up git remote so that git knows where to push the repo to.
+You are assigned a git remote URL and you have to add it to your git
+repository.
 
 ```shell
-# Create Docker Machine called `default`
-$ docker-machine create --driver virtualbox default
-
-# Tell Docker you want to use this Docker Machine
-$ eval `docker-machine env default`
+$ git remote add skygear git@<url>:<app-name>.git
 ```
 
-If the Docker Machine is stopped, you can restart the same Docker Machine:
+To push your code:
 
 ```shell
-# Start Docker Machine called `default`
-$ docker-machine start default
-
-# Tell Docker you want to use this Docker Machine
-$ eval `docker-machine env default`
+$ git push skygear master
 ```
 
-## I want to get skygear / I want to upgrade skygear
+Wait until your cloudcode is successfully built.
+
+## Creating from scratch
+
+If building an app serving cat photos is not your thing, you can create
+a cloudcode project completely from scratch.
+
+All you need to create a Skygear cloudcode project is a file
+called `__init__.py`. This file serves as the entry point of your cloudcode
+and it must exist in the root directory of your repository.
 
 ```shell
-# Pull all dependent Docker images
-$ docker-compose pull
-
-# Optionally, you can pull the skygear image only by specifying the service name `app`
-# (service name can be found in docker-compose.yml)
-$ docker-compose pull app
+$ mkdir cloudcode
+$ cd cloudcode
+$ git init
+Initialized empty Git repository in /Users/skygear/cloudcode/.git/
+$ touch __init__.py
+$ git add __init__.py
+$ git commit -m "Initial commit"
+[master (root-commit) 1e6b5f5] Initial commit
+ 1 file changed, 0 insertions(+), 0 deletions(-)
+  create mode 100644 __init__.py
+$ git remote add skygear git@<url>:<app-name>.git
+$ git push skygear master
 ```
 
-## I want to build/rebuild/upgrade the plugin
+The above commands would help you build a blank git repository and push it
+to Skygear Cloud. However, a blank project is probably not very useful, but
+you get the idea of the bare minimum to get you started.
 
-```shell
-# This command always pull the latest image and rebuild your plugin without using the cache.
-$ docker-compose build --pull --no-cache plugin
-
-# Optionally, if what you have changed is the Dockerfile and requirements.txt:
-$ docker-compose build plugin
-```
-
-Note: You may need to migrate database. The procedure is to be included
-here in the future.
-
-## I want to start skygear without starting database and redis every time
-
-```shell
-# Start database and redis first
-$ docker-compose start db redis
-
-# Start skygear and plugin in the foreground.
-$ docker-compose up app plugin
-
-# Alternatively, you can start skygear and plugin in the background
-$ docker-compose up -d app plugin
-
-# Alternatively, you can start skygear by itself, then run the plugin in the foreground
-$ docker-compose start app  # or docker-compose up -d app
-$ docker-compose up plugin
-```
-
-You can press CTRL+C to stop the containers. If the containers are stuck,
-press CTRL+C again. Run `docker-compose up app plugin` again to start skygear
-and plugin again.
-
-Note: If you run `docker-compose up` (without service names), the
-database and redis will be stopped when you press CTRL+C. Make sure
-you specify the service name if you do not want the database and redis
-to stop.
-
-## I changed my requirements.txt file
-
-See *I want to build/rebuild/upgrade the plugin*.
-
-## I need to install additional software in my plugin
-
-Customize `Dockerfile` with additional commands to install your dependencies.
-Then see *I want to build/rebuild/upgrade the plugin* to rebuild your plugin.
-
-## I need a clean start
-
-**Important**: The `docker-compose.yml` in this sample is designed such that your data
-in the container are persisted across container delete and re-create cycle.
-If you deviate from the sample `docker-compose.yml`, you should read about
-[managing data in
-containers](https://docs.docker.com/engine/userguide/dockervolumes/) and why
-[docker data containers are good](https://medium.com/@ramangupta/why-docker-data-containers-are-good-589b3c6c749e), and you are on your own.
-
-### Delete skygear and plugin containers
-
-```shell
-$ docker-compose stop app plugin
-$ docker-compose rm app plugin  
-Going to remove catapi_plugin_1, catapi_app_1
-Are you sure? [yN] y
-Removing catapi_plugin_1 ... done
-Removing catapi_app_1 ... done
-```
-
-Your data is not deleted even if skygear and plugin containers are removed.
-This is because your data is stored in a data container (suffixed `_data`).
-
-### Delete database and redis containers
-
-```shell
-$ docker-compose stop
-$ docker-compose rm app plugin db redis
-Going to remove catapi_plugin_1, catapi_app_1, catapi_db_1, catapi_redis_1
-Are you sure? [yN] y
-Removing catapi_plugin_1 ... done
-Removing catapi_app_1 ... done
-Removing catapi_db_1 ... done
-Removing catapi_redis_1 ... done
-```
-
-Your data is not deleted even if skygear and plugin containers are removed.
-This is because your data is stored in a data container (suffixed `_data`).
-
-**Important**: If you delete the database or redis containers,
-you must delete the skygear and the plugin containers as well.
-
-### If all else fails
-
-You can delete all containers defined in `docker-compose.yml` by
-running `docker-compose stop` and `docker-compose rm`.
-
-You can also delete Docker Machine to start over: `docker-machine rm default`.
-
-## I need to deploy to production
-
-The sample `docker-compose.yml` may be used to deploy to production, but
-you need expert advice. Especially, you should take precaution on how
-data is persisted.
-
-## Troubleshooting
-
-### I deleted the database container, and then the skygear cannot connect the database anymore
-
-Since containers are dependent on each other, you cannot delete the database
-container and expect the skygear container to find the database container
-automatically. You need to recreate skygear container and plugin container.
-
-You should use the commands stated in the *I need a clean start* section.
+To get started adding features to your cloudcode, read the
+[Skygear documentation](http://docs.skygear.io/).
